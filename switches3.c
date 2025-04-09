@@ -18,50 +18,48 @@ D. McLaughlin 4/13/24 */
 int main(void) {
     unsigned char r_button, g_button, both_leds;
     int i;
+    
+    DDRD = (1 << REDLED) | (1 << GREENLED);  // Set LED pins as outputs
+    // Enable pull-ups for buttons
+    PORTD = (1 << REDBUTTON) | (1 << GREENBUTTON) | (1 << BOTHLEDS); 
 
-    DDRD = (1<<REDLED) | (1<<GREENLED);  // Set REDLED and GREENLED as outputs
-    PORTD = (1<<REDBUTTON) | (1<<GREENBUTTON) | (1<<BOTHLEDS); // Enable pull-ups
+    while (1) {
+        int pressedCount = 0;
+        
+        r_button = (PIND & (1 << REDBUTTON));     // 1 when not pressed, 0 when pressed
+        g_button = (PIND & (1 << GREENBUTTON));     // 1 when not pressed, 0 when pressed
+        both_leds = (PIND & (1 << BOTHLEDS));         // 1 when not pressed, 0 when pressed
 
-    while(1) {
-        r_button = (PIND & (1<<REDBUTTON));     // 1 when not pressed, 0 when pressed
-        g_button = (PIND & (1<<GREENBUTTON));   // 1 when not pressed, 0 when pressed
-        both_leds = (PIND & (1<<BOTHLEDS));     // 1 when not pressed, 0 when pressed
+        _delay_ms(MYDELAY);  // Debounce delay
+        if (r_button == 0) pressedCount++;
+        if (g_button == 0) pressedCount++;
+        if (both_leds == 0) pressedCount++;
 
-        if (r_button + g_button + both_leds >= 2){
-            if (both_leds == 0) {  // If both buttons are pressed
-                for (i = 0; i < 10; i++) {  // Blink both LEDs 10 times
-                    PORTD ^= (1<<REDLED) | (1<<GREENLED);  // Toggle both LEDs
-                    _delay_ms(MYDELAY);                     // Delay for MYDELAY
+
+        if (pressedCount == 1) {
+            if (both_leds == 0) {  // Only both-button pressed
+                for (i = 0; i < 10; i++) {
+                    PORTD ^= (1 << REDLED) | (1 << GREENLED);  // Toggle both LEDs
+                    _delay_ms(MYDELAY);
                 }
-            } else {
-                PORTD &= ~((1<<REDLED) | (1<<GREENLED)); // Turn off both LEDs
-            }
-
-            if (r_button == 0) {  // If red button is pressed
-                // Blink red LED at 5Hz (200ms period for each blink)
-                for (i = 0; i < 10; i++) {  // Blink 10 times (adjust for desired duration)
-                    PORTD ^= (1<<REDLED);  // Toggle the REDLED
-                    _delay_ms(100);        // Delay for 100ms (half of 200ms period)
+            } else if (r_button == 0) {  // Only red button pressed
+                for (i = 0; i < 10; i++) {
+                    PORTD ^= (1 << REDLED);
+                    _delay_ms(100);
                 }
-            } else {
-                PORTD &= ~(1<<REDLED); // Turn off REDLED if button is not pressed
-            }
-
-            if (g_button == 0) {   // If green button is pressed
-                // Blink green LED at 5Hz (200ms period for each blink)
-                for (i = 0; i < 10; i++) {  // Blink 10 times (adjust for desired duration)
-                    PORTD ^= (1<<GREENLED);  // Toggle the GREENLED
-                    _delay_ms(100);          // Delay for 100ms (half of 200ms period)
+            } else if (g_button == 0) {  // Only green button pressed
+                for (i = 0; i < 10; i++) {
+                    PORTD ^= (1 << GREENLED);
+                    _delay_ms(100);
                 }
-            } else {
-                PORTD &= ~(1<<GREENLED); // Turn off GREENLED
             }
         } else {
-            PORTD &= ~((1<<REDLED) | (1<<GREENLED)); // Turn off both LEDs
+            // If none or more than one button is pressed, turn off both LEDs.
+            PORTD &= ~((1 << REDLED) | (1 << GREENLED));
         }
     }
+    return 0;
 }
-
 
 /**** End of File *****/
 
